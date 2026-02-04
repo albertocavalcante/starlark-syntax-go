@@ -92,7 +92,13 @@ jobs:
           fi
           echo "flags=$FLAGS" >> "$GITHUB_OUTPUT"
 
-      # Exit code 4 = NOOP (no changes to sync), which is not an error.
+      # COPYBARA EXIT CODE HANDLING:
+      # Exit code 4 (NO_OP) occurs when there are no upstream changes to sync.
+      # This is thrown as EmptyChangeException in Copybara's Main.java and ALWAYS
+      # returns exit code 4, regardless of flags. The --ignore-noop flag only
+      # affects VoidOperationException (transform-level noops), not empty migrations.
+      # Therefore, we explicitly handle exit code 4 as success.
+      # See: github.com/google/copybara Main.java and ExitCode.java
       - name: Sync Bzl Parser
         if: ${{ inputs.dry_run != true }}
         run: |
