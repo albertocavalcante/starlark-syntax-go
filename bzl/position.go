@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package build
+package bzl
 
 // GetParamName extracts the param name from an item of function params.
 func GetParamName(param Expr) (name, op string) {

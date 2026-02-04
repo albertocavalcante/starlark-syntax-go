@@ -1,5 +1,5 @@
 //line build/parse.y:29
-package build
+package bzl
 
 import __yyfmt__ "fmt"
 

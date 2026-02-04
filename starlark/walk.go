@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package syntax
+package starlark
 
 // Walk traverses a syntax tree in depth-first order.
 // It starts by calling f(n); n must not be nil.

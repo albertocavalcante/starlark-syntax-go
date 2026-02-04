@@ -16,7 +16,7 @@ limitations under the License.
 
 // Lexical scanning for BUILD file parser.
 
-package build
+package bzl
 
 import (
 	"bytes"

@@ -62,10 +62,8 @@ core.workflow(
         core.rename("utils.go", "position.go", paths = glob(["bzl/*.go"])),
 
         core.replace(
-            before = "^package build$$",
+            before = "package build",
             after = "package bzl",
-            regex_groups = {},
-            multiline = True,
             paths = glob(["bzl/*.go"]),
         ),
 
@@ -106,6 +104,7 @@ core.workflow(
     origin_files = glob(
         include = [
             "syntax/syntax.go",
+            "syntax/options.go",
             "syntax/parse.go",
             "syntax/scan.go",
             "syntax/quote.go",
@@ -130,10 +129,8 @@ core.workflow(
         core.rename("syntax.go", "ast.go", paths = glob(["starlark/*.go"])),
 
         core.replace(
-            before = "^package syntax$$",
+            before = "package syntax",
             after = "package starlark",
-            regex_groups = {},
-            multiline = True,
             paths = glob(["starlark/*.go"]),
         ),
 

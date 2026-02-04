@@ -16,7 +16,7 @@ limitations under the License.
 
 // Python quoted strings.
 
-package build
+package bzl
 
 import (
 	"bytes"

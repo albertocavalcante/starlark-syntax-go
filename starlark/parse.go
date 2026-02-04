@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package syntax
+package starlark
 
 // This file defines a recursive-descent parser for Starlark.
 // The LL(1) grammar of Starlark and the names of many productions follow Python 2.7.

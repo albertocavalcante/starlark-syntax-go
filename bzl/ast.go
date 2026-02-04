@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // Package build implements parsing and printing of BUILD files.
-package build
+package bzl
 
 // Syntax data structure definitions.
 

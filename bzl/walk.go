@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package build
+package bzl
 
 // StopTraversalError is a special error that tells the walker to not traverse
 // further and visit child nodes of the current node.
