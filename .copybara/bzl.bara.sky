@@ -1,0 +1,164 @@
+# ==============================================================================
+# .copybara/bzl.bara.sky
+#
+# Syncs the Starlark parser from bazelbuild/buildtools to bzl/
+#
+# COPYBARA REFERENCE DOCUMENTATION:
+#   - Full Reference: https://github.com/google/copybara/blob/master/docs/reference.md
+#   - Examples: https://github.com/google/copybara/blob/master/docs/examples.md
+#
+# UPSTREAM SOURCE:
+#   - Repository: https://github.com/bazelbuild/buildtools
+#   - Package: build/ (Starlark/BUILD file parser)
+#   - License: Apache 2.0
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# authoring.pass_thru(default)
+# Ref: https://github.com/google/copybara/blob/master/docs/reference.md#authoringpass_thru
+#
+# Preserves the original commit author from the source repository.
+# Falls back to the 'default' author for squash commits or when author is unknown.
+# ------------------------------------------------------------------------------
+defaultAuthor = authoring.pass_thru("Eukia[bot] <eukia[bot]@users.noreply.github.com>")
+
+# ------------------------------------------------------------------------------
+# core.workflow(...)
+# Ref: https://github.com/google/copybara/blob/master/docs/reference.md#coreworkflow
+#
+# Defines a migration workflow from origin to destination with transformations.
+# ------------------------------------------------------------------------------
+core.workflow(
+    name = "sync-bzl-parser",
+
+    # --------------------------------------------------------------------------
+    # git.origin(url, ref, ...)
+    # Ref: https://github.com/google/copybara/blob/master/docs/reference.md#gitorigin
+    # --------------------------------------------------------------------------
+    origin = git.origin(
+        url = "https://github.com/bazelbuild/buildtools.git",
+        ref = "master",
+    ),
+
+    # --------------------------------------------------------------------------
+    # git.github_destination(url, push, ...)
+    # Ref: https://github.com/google/copybara/blob/master/docs/reference.md#gitgithub_destination
+    # --------------------------------------------------------------------------
+    destination = git.github_destination(
+        url = "https://github.com/albertocavalcante/starlark-syntax-go.git",
+        push = "main",
+    ),
+
+    # --------------------------------------------------------------------------
+    # glob(include, exclude=[])
+    # Ref: https://github.com/google/copybara/blob/master/docs/reference.md#glob
+    #
+    # Pattern syntax:
+    #   ** = matches any number of directories
+    #   *  = matches any characters except /
+    # --------------------------------------------------------------------------
+    origin_files = glob(
+        include = [
+            "build/lex.go",        # Lexer
+            "build/parse.y.go",    # Parser (yacc-generated)
+            "build/syntax.go",     # AST node types
+            "build/quote.go",      # String quoting utilities
+            "build/walk.go",       # AST traversal
+            "build/utils.go",      # Utility functions
+            "labels/labels.go",    # Bazel label parsing
+            "LICENSE",             # Apache 2.0 license
+        ],
+        exclude = [
+            "**/*_test.go",        # Exclude all test files
+        ],
+    ),
+
+    # --------------------------------------------------------------------------
+    # destination_files: glob
+    #
+    # CRITICAL: Files NOT matching this glob are NEVER deleted by Copybara.
+    # Exclude doc.go since it's maintained directly in this repo.
+    # --------------------------------------------------------------------------
+    destination_files = glob(
+        include = ["bzl/**"],
+        exclude = ["bzl/doc.go"],  # Maintained directly, not synced
+    ),
+
+    # --------------------------------------------------------------------------
+    # mode: "ITERATIVE" preserves individual commits (maintains history!)
+    # Ref: https://github.com/google/copybara/blob/master/docs/reference.md#coreworkflow
+    # --------------------------------------------------------------------------
+    mode = "ITERATIVE",
+
+    authoring = defaultAuthor,
+
+    transformations = [
+        # ======================================================================
+        # STEP 1: Move directories
+        # ----------------------------------------------------------------------
+        # core.move(before, after, ...)
+        # Ref: https://github.com/google/copybara/blob/master/docs/reference.md#coremove
+        #
+        # GOTCHA: 'before' is treated as a PREFIX, not exact path!
+        # ======================================================================
+        core.move("build", "bzl"),
+        core.move("labels", "bzl/labels"),
+        core.move("LICENSE", "bzl/LICENSE"),
+
+        # ======================================================================
+        # STEP 2: Rename files for clarity
+        # ----------------------------------------------------------------------
+        # core.rename(before, after, paths, ...)
+        # Ref: https://github.com/google/copybara/blob/master/docs/reference.md#corerename
+        #
+        # Matches FILENAMES only, not full paths.
+        # ======================================================================
+        core.rename("parse.y.go", "parse.go", paths = glob(["bzl/*.go"])),
+        core.rename("syntax.go", "ast.go", paths = glob(["bzl/*.go"])),
+        core.rename("utils.go", "position.go", paths = glob(["bzl/*.go"])),
+
+        # ======================================================================
+        # STEP 3: Rewrite package declaration
+        # ----------------------------------------------------------------------
+        # core.replace(before, after, regex_groups, ...)
+        # Ref: https://github.com/google/copybara/blob/master/docs/reference.md#corereplace
+        #
+        # GOTCHA: Without regex_groups={}, 'before' is treated as LITERAL text!
+        # ======================================================================
+        core.replace(
+            before = "^package build$",
+            after = "package bzl",
+            regex_groups = {},       # REQUIRED to enable regex mode!
+            multiline = True,        # Make ^ and $ match line boundaries
+            paths = glob(["bzl/*.go"]),
+        ),
+
+        # ======================================================================
+        # STEP 4: Rewrite import paths
+        # Include quotes to avoid false matches in comments/strings
+        # ======================================================================
+        core.replace(
+            before = '"github.com/bazelbuild/buildtools/build"',
+            after = '"github.com/albertocavalcante/starlark-syntax-go/bzl"',
+            paths = glob(["**/*.go"]),
+        ),
+        core.replace(
+            before = '"github.com/bazelbuild/buildtools/labels"',
+            after = '"github.com/albertocavalcante/starlark-syntax-go/bzl/labels"',
+            paths = glob(["**/*.go"]),
+        ),
+
+        # ======================================================================
+        # STEP 5: Metadata transformations
+        # ----------------------------------------------------------------------
+        # metadata.expose_label(name)
+        # Ref: https://github.com/google/copybara/blob/master/docs/reference.md#metadataexpose_label
+        #
+        # metadata.add_header(text)
+        # Ref: https://github.com/google/copybara/blob/master/docs/reference.md#metadataadd_header
+        # ======================================================================
+        metadata.expose_label("Co-authored-by"),
+        metadata.expose_label("Signed-off-by"),
+        metadata.add_header("Synced-From: bazelbuild/buildtools/build"),
+    ],
+)

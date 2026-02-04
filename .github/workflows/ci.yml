@@ -1,5 +1,3 @@
-# .github/workflows/ci.yml (in starlark-syntax-go repo)
-
 name: CI
 
 on:

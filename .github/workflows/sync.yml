@@ -1,0 +1,271 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sundays
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (validate only, no push)'
+        type: boolean
+        default: false
+      init_history:
+        description: 'Initialize history (first-time sync)'
+        type: boolean
+        default: false
+      force:
+        description: 'Force push (dangerous)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  COPYBARA_VERSION: "20251215"
+
+jobs:
+  sync:
+    name: Sync Upstream Sources
+    runs-on: ubuntu-latest
+    steps:
+      # --------------------------------------------------------------------------
+      # Generate Eukia App Token
+      # Ref: https://github.com/actions/create-github-app-token
+      #
+      # Uses the Eukia GitHub App for authentication instead of SSH deploy keys.
+      # Advantages: temporary tokens, scoped access, full audit trail.
+      # --------------------------------------------------------------------------
+      - name: Generate Eukia App Token
+        id: eukia
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.EUKIA_APP_ID }}
+          private-key: ${{ secrets.EUKIA_APP_PRIVATE_KEY }}
+          owner: albertocavalcante
+          repositories: starlark-syntax-go
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.eukia.outputs.token }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache Copybara JAR
+        id: cache-copybara
+        uses: actions/cache@v4
+        with:
+          path: /tmp/copybara_deploy.jar
+          key: copybara-${{ env.COPYBARA_VERSION }}
+
+      - name: Download Copybara
+        if: steps.cache-copybara.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o /tmp/copybara_deploy.jar \
+            "https://github.com/google/copybara/releases/download/v${COPYBARA_VERSION}/copybara_deploy.jar"
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "Eukia[bot]"
+          git config --global user.email "eukia[bot]@users.noreply.github.com"
+          git config --global credential.helper store
+          echo "https://x-access-token:${{ steps.eukia.outputs.token }}@github.com" > ~/.git-credentials
+
+      # --------------------------------------------------------------------------
+      # Validate mode - only check config syntax, don't push
+      # --------------------------------------------------------------------------
+      - name: Run Copybara (Validate)
+        if: ${{ inputs.dry_run == true }}
+        run: |
+          java -jar /tmp/copybara_deploy.jar validate \
+            .copybara/bzl.bara.sky
+
+      # --------------------------------------------------------------------------
+      # Build flags for Copybara
+      # GOTCHA: inputs is null for scheduled runs, use ${{ }} expression syntax
+      # --------------------------------------------------------------------------
+      - name: Build Copybara flags
+        id: flags
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          FLAGS=""
+          if [[ "${{ inputs.init_history }}" == "true" ]]; then
+            FLAGS="$FLAGS --init-history"
+          fi
+          if [[ "${{ inputs.force }}" == "true" ]]; then
+            FLAGS="$FLAGS --force"
+          fi
+          echo "flags=$FLAGS" >> "$GITHUB_OUTPUT"
+
+      # --------------------------------------------------------------------------
+      # Sync bzl parser from bazelbuild/buildtools
+      # --------------------------------------------------------------------------
+      - name: Sync Bzl Parser
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          java -jar /tmp/copybara_deploy.jar migrate \
+            .copybara/bzl.bara.sky \
+            sync-bzl-parser \
+            --ignore-noop \
+            ${{ steps.flags.outputs.flags }}
+
+      # --------------------------------------------------------------------------
+      # Sync starlark parser from google/starlark-go
+      # --------------------------------------------------------------------------
+      - name: Sync Starlark Parser
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          java -jar /tmp/copybara_deploy.jar migrate \
+            .copybara/starlark.bara.sky \
+            sync-starlark-parser \
+            --ignore-noop \
+            ${{ steps.flags.outputs.flags }}
+
+  # ----------------------------------------------------------------------------
+  # Generate VERSION.json with sync metadata
+  # ----------------------------------------------------------------------------
+  generate-version:
+    name: Generate VERSION.json
+    runs-on: ubuntu-latest
+    needs: sync
+    if: ${{ inputs.dry_run != true }}
+    steps:
+      - name: Generate Eukia App Token
+        id: eukia
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.EUKIA_APP_ID }}
+          private-key: ${{ secrets.EUKIA_APP_PRIVATE_KEY }}
+          owner: albertocavalcante
+          repositories: starlark-syntax-go
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.eukia.outputs.token }}
+
+      - name: Generate VERSION.json
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const version = {
+              generated_at: new Date().toISOString(),
+              generator: "github-actions",
+              sources: {
+                buildtools: {
+                  repository: "github.com/bazelbuild/buildtools",
+                  ref: "master",
+                },
+                "starlark-go": {
+                  repository: "go.starlark.net/starlark",
+                  ref: "master",
+                }
+              },
+              packages: {
+                "bzl": "Bzl dialect parser (Apache 2.0)",
+                "bzl/labels": "Bazel label utilities (Apache 2.0)",
+                "starlark": "Official Google Starlark parser (BSD-3)"
+              }
+            };
+
+            fs.writeFileSync('VERSION.json', JSON.stringify(version, null, 2) + '\n');
+            console.log('Generated VERSION.json');
+
+      - name: Commit VERSION.json
+        run: |
+          git config user.name "Eukia[bot]"
+          git config user.email "eukia[bot]@users.noreply.github.com"
+          git add VERSION.json
+          git diff --staged --quiet || git commit -m "chore: update VERSION.json"
+          git push
+
+  # ----------------------------------------------------------------------------
+  # Validate build after sync
+  # ----------------------------------------------------------------------------
+  validate:
+    name: Validate Build
+    runs-on: ubuntu-latest
+    needs: generate-version
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...
+
+  # ----------------------------------------------------------------------------
+  # Create release tag after successful sync
+  # ----------------------------------------------------------------------------
+  release:
+    name: Create Release Tag
+    runs-on: ubuntu-latest
+    needs: validate
+    if: ${{ inputs.dry_run != true }}
+    steps:
+      - name: Generate Eukia App Token
+        id: eukia
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.EUKIA_APP_ID }}
+          private-key: ${{ secrets.EUKIA_APP_PRIVATE_KEY }}
+          owner: albertocavalcante
+          repositories: starlark-syntax-go
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.eukia.outputs.token }}
+
+      - name: Create release tag
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.eukia.outputs.token }}
+          script: |
+            const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const tag = `v0.${date}.0`;
+
+            // Check if tag exists
+            try {
+              await github.rest.git.getRef({
+                owner: 'albertocavalcante',
+                repo: 'starlark-syntax-go',
+                ref: `tags/${tag}`
+              });
+              console.log(`Tag ${tag} already exists, skipping`);
+              return;
+            } catch (e) {
+              if (e.status !== 404) throw e;
+            }
+
+            // Get current SHA
+            const { data: ref } = await github.rest.git.getRef({
+              owner: 'albertocavalcante',
+              repo: 'starlark-syntax-go',
+              ref: 'heads/main'
+            });
+
+            // Create tag
+            await github.rest.git.createRef({
+              owner: 'albertocavalcante',
+              repo: 'starlark-syntax-go',
+              ref: `refs/tags/${tag}`,
+              sha: ref.object.sha
+            });
+
+            console.log(`Created tag ${tag}`);
