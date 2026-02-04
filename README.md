@@ -10,15 +10,15 @@ go get github.com/albertocavalcante/starlark-syntax-go
 
 ## Packages
 
-### `bazel` — Bazel-flavored Starlark
+### `bzl` — Bzl Dialect (Starlark + Bazel builtins)
 
 Parser optimized for BUILD, .bzl, and MODULE.bazel files. Preserves comments as CST-like attached nodes.
 
 ```go
-import "github.com/albertocavalcante/starlark-syntax-go/bazel"
+import "github.com/albertocavalcante/starlark-syntax-go/bzl"
 
 content := []byte(`module(name = "example", version = "1.0.0")`)
-file, err := bazel.Parse("MODULE.bazel", content)
+file, err := bzl.Parse("MODULE.bazel", content)
 ```
 
 **Source**: [bazelbuild/buildtools](https://github.com/bazelbuild/buildtools) (Apache 2.0)
@@ -38,9 +38,10 @@ file, err := starlark.Parse("example.star", content, 0)
 
 ## Why Two Parsers?
 
-| Aspect | `bazel` | `starlark` |
-|--------|---------|------------|
-| **Optimized for** | BUILD/bzl files | General Starlark |
+| Aspect | `bzl` | `starlark` |
+|--------|-------|------------|
+| **Semantics** | Bzl dialect (Starlark + Bazel builtins) | Pure Starlark |
+| **Optimized for** | BUILD, .bzl, MODULE.bazel files | General .star files |
 | **Comment handling** | CST-style (attached to nodes) | Optional retention |
 | **Indentation** | Not needed (flat files) | Full support |
 | **Parser type** | Yacc-generated | Recursive-descent |

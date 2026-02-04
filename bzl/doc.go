@@ -1,4 +1,4 @@
-// Package bazel provides a parser for Bazel-flavored Starlark files.
+// Package bzl provides a parser for the Bzl dialect (Starlark + Bazel builtins).
 //
 // This package is automatically synced from bazelbuild/buildtools and is
 // optimized for parsing BUILD, .bzl, and MODULE.bazel files. It preserves
@@ -7,7 +7,7 @@
 // Basic usage:
 //
 //	content := []byte(`load("@rules_go//go:def.bzl", "go_library")`)
-//	file, err := bazel.Parse("BUILD.bazel", content)
+//	file, err := bzl.Parse("BUILD.bazel", content)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
@@ -17,4 +17,4 @@
 //
 // Source: https://github.com/bazelbuild/buildtools
 // License: Apache 2.0
-package bazel
+package bzl
