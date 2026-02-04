@@ -32,6 +32,7 @@ core.workflow(
 
     origin_files = glob(
         include = [
+            # Main sources
             "build/lex.go",
             "build/parse.y.go",
             "build/syntax.go",
@@ -39,13 +40,17 @@ core.workflow(
             "build/walk.go",
             "build/utils.go",
             "labels/labels.go",
+            # Tests
+            "build/*_test.go",
+            # Test utilities (synced to internal/ to hide from external users)
+            "testutils/*.go",
+            # License
             "LICENSE",
         ],
-        exclude = ["**/*_test.go"],
     ),
 
     destination_files = glob(
-        include = ["bzl/**"],
+        include = ["bzl/**", "internal/testutils/**"],
         exclude = ["bzl/doc.go"],
     ),
 
@@ -53,20 +58,27 @@ core.workflow(
     authoring = defaultAuthor,
 
     transformations = [
+        # Move main sources
         core.move("build", "bzl"),
         core.move("labels", "bzl/labels"),
         core.move("LICENSE", "bzl/LICENSE"),
 
+        # Move testutils to internal/ (Go convention: hidden from external importers)
+        core.move("testutils", "internal/testutils"),
+
+        # Rename files
         core.rename("parse.y.go", "parse.go", paths = glob(["bzl/*.go"])),
         core.rename("syntax.go", "ast.go", paths = glob(["bzl/*.go"])),
         core.rename("utils.go", "position.go", paths = glob(["bzl/*.go"])),
 
+        # Update package name
         core.replace(
             before = "package build",
             after = "package bzl",
             paths = glob(["bzl/*.go"]),
         ),
 
+        # Update import paths
         core.replace(
             before = '"github.com/bazelbuild/buildtools/build"',
             after = '"github.com/albertocavalcante/starlark-syntax-go/bzl"',
@@ -75,6 +87,11 @@ core.workflow(
         core.replace(
             before = '"github.com/bazelbuild/buildtools/labels"',
             after = '"github.com/albertocavalcante/starlark-syntax-go/bzl/labels"',
+            paths = glob(["**/*.go"]),
+        ),
+        core.replace(
+            before = '"github.com/bazelbuild/buildtools/testutils"',
+            after = '"github.com/albertocavalcante/starlark-syntax-go/internal/testutils"',
             paths = glob(["**/*.go"]),
         ),
 
@@ -103,15 +120,20 @@ core.workflow(
 
     origin_files = glob(
         include = [
+            # Main sources
             "syntax/syntax.go",
             "syntax/options.go",
             "syntax/parse.go",
             "syntax/scan.go",
             "syntax/quote.go",
             "syntax/walk.go",
+            # Tests (stdlib only, no external deps)
+            "syntax/*_test.go",
+            # Test data
+            "syntax/testdata/**",
+            # License
             "LICENSE",
         ],
-        exclude = ["**/*_test.go"],
     ),
 
     destination_files = glob(
