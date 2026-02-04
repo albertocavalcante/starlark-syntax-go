@@ -82,7 +82,7 @@ See `VERSION.json` for exact upstream commit references.
 This package automatically syncs code from:
 
 - **[bazelbuild/buildtools](https://github.com/bazelbuild/buildtools)** — Apache 2.0, Copyright The Bazel Authors
-- **[google/starlark-go](https://github.com/google/starlark-go)** — BSD-3-Clause, Copyright The Go Authors
+- **[google/starlark-go](https://github.com/google/starlark-go)** — BSD-3-Clause, Copyright The Bazel Authors
 
 See `NOTICE` and individual `LICENSE` files for full attribution.
 

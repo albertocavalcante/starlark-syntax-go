@@ -9,7 +9,7 @@ This product includes software developed by:
    https://github.com/bazelbuild/buildtools
 
 2. google/starlark-go
-   Copyright The Go Authors
+   Copyright The Bazel Authors
    Licensed under the BSD 3-Clause License
    https://github.com/google/starlark-go
 
