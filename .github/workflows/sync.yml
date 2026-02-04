@@ -140,6 +140,12 @@ jobs:
           script: |
             const fs = require('fs');
 
+            // Fetch actual commit SHAs from upstream repos
+            const [buildtools, starlarkGo] = await Promise.all([
+              github.rest.repos.getBranch({ owner: 'bazelbuild', repo: 'buildtools', branch: 'main' }),
+              github.rest.repos.getBranch({ owner: 'google', repo: 'starlark-go', branch: 'master' }),
+            ]);
+
             const version = {
               generated_at: new Date().toISOString(),
               generator: "github-actions",
@@ -147,10 +153,12 @@ jobs:
                 buildtools: {
                   repository: "github.com/bazelbuild/buildtools",
                   ref: "main",
+                  sha: buildtools.data.commit.sha,
                 },
                 "starlark-go": {
                   repository: "github.com/google/starlark-go",
                   ref: "master",
+                  sha: starlarkGo.data.commit.sha,
                 }
               },
               packages: {
@@ -161,7 +169,7 @@ jobs:
             };
 
             fs.writeFileSync('VERSION.json', JSON.stringify(version, null, 2) + '\n');
-            console.log('Generated VERSION.json');
+            console.log('Generated VERSION.json:', JSON.stringify(version, null, 2));
 
       - name: Commit VERSION.json
         run: |
