@@ -1,0 +1,32 @@
+pre-commit:
+  commands:
+    branch-check:
+      run: |
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$branch" = "main" ]; then
+          echo "Direct commits to main branch are forbidden!"
+          exit 1
+        fi
+    go-fmt:
+      glob: '**/*.go'
+      run: gofmt -l {staged_files} | grep . && exit 1 || exit 0
+    yaml-lint:
+      glob: '**/*.{yml,yaml}'
+      run: yq '.' {staged_files} > /dev/null
+    workflow-lint:
+      glob: '.github/workflows/*.{yml,yaml}'
+      run: actionlint {staged_files}
+    copybara-validate:
+      glob: '.copybara/copy.bara.sky'
+      run: just validate-copybara
+
+commit-msg:
+  commands:
+    conventional-commit:
+      run: |
+        commit_msg=$(head -n1 {1})
+        if ! echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?!?: .+$"; then
+          echo "Error: Commit message does not follow conventional commits format."
+          echo "Example: feat(api): add new endpoint"
+          exit 1
+        fi

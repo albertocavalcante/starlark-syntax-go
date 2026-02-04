@@ -1,0 +1,150 @@
+# ==============================================================================
+# .copybara/copy.bara.sky
+#
+# Copybara configuration for syncing Starlark parsers from upstream sources.
+#
+# WORKFLOWS:
+#   - sync-bzl-parser: bazelbuild/buildtools → bzl/
+#   - sync-starlark-parser: google/starlark-go → starlark/
+#
+# COPYBARA REFERENCE:
+#   - https://github.com/google/copybara/blob/master/docs/reference.md
+# ==============================================================================
+
+defaultAuthor = authoring.pass_thru("Eukia[bot] <eukia[bot]@users.noreply.github.com>")
+
+# ==============================================================================
+# WORKFLOW: sync-bzl-parser
+# Source: bazelbuild/buildtools (Apache 2.0)
+# ==============================================================================
+core.workflow(
+    name = "sync-bzl-parser",
+
+    origin = git.origin(
+        url = "https://github.com/bazelbuild/buildtools.git",
+        ref = "main",
+    ),
+
+    destination = git.github_destination(
+        url = "https://github.com/albertocavalcante/starlark-syntax-go.git",
+        push = "main",
+    ),
+
+    origin_files = glob(
+        include = [
+            "build/lex.go",
+            "build/parse.y.go",
+            "build/syntax.go",
+            "build/quote.go",
+            "build/walk.go",
+            "build/utils.go",
+            "labels/labels.go",
+            "LICENSE",
+        ],
+        exclude = ["**/*_test.go"],
+    ),
+
+    destination_files = glob(
+        include = ["bzl/**"],
+        exclude = ["bzl/doc.go"],
+    ),
+
+    mode = "ITERATIVE",
+    authoring = defaultAuthor,
+
+    transformations = [
+        core.move("build", "bzl"),
+        core.move("labels", "bzl/labels"),
+        core.move("LICENSE", "bzl/LICENSE"),
+
+        core.rename("parse.y.go", "parse.go", paths = glob(["bzl/*.go"])),
+        core.rename("syntax.go", "ast.go", paths = glob(["bzl/*.go"])),
+        core.rename("utils.go", "position.go", paths = glob(["bzl/*.go"])),
+
+        core.replace(
+            before = "^package build$$",
+            after = "package bzl",
+            regex_groups = {},
+            multiline = True,
+            paths = glob(["bzl/*.go"]),
+        ),
+
+        core.replace(
+            before = '"github.com/bazelbuild/buildtools/build"',
+            after = '"github.com/albertocavalcante/starlark-syntax-go/bzl"',
+            paths = glob(["**/*.go"]),
+        ),
+        core.replace(
+            before = '"github.com/bazelbuild/buildtools/labels"',
+            after = '"github.com/albertocavalcante/starlark-syntax-go/bzl/labels"',
+            paths = glob(["**/*.go"]),
+        ),
+
+        metadata.expose_label("Co-authored-by"),
+        metadata.expose_label("Signed-off-by"),
+        metadata.add_header("Synced-From: bazelbuild/buildtools/build"),
+    ],
+)
+
+# ==============================================================================
+# WORKFLOW: sync-starlark-parser
+# Source: google/starlark-go (BSD-3-Clause)
+# ==============================================================================
+core.workflow(
+    name = "sync-starlark-parser",
+
+    origin = git.origin(
+        url = "https://github.com/google/starlark-go.git",
+        ref = "master",
+    ),
+
+    destination = git.github_destination(
+        url = "https://github.com/albertocavalcante/starlark-syntax-go.git",
+        push = "main",
+    ),
+
+    origin_files = glob(
+        include = [
+            "syntax/syntax.go",
+            "syntax/parse.go",
+            "syntax/scan.go",
+            "syntax/quote.go",
+            "syntax/walk.go",
+            "LICENSE",
+        ],
+        exclude = ["**/*_test.go"],
+    ),
+
+    destination_files = glob(
+        include = ["starlark/**"],
+        exclude = ["starlark/doc.go"],
+    ),
+
+    mode = "ITERATIVE",
+    authoring = defaultAuthor,
+
+    transformations = [
+        core.move("syntax", "starlark"),
+        core.move("LICENSE", "starlark/LICENSE"),
+
+        core.rename("syntax.go", "ast.go", paths = glob(["starlark/*.go"])),
+
+        core.replace(
+            before = "^package syntax$$",
+            after = "package starlark",
+            regex_groups = {},
+            multiline = True,
+            paths = glob(["starlark/*.go"]),
+        ),
+
+        core.replace(
+            before = '"go.starlark.net/syntax"',
+            after = '"github.com/albertocavalcante/starlark-syntax-go/starlark"',
+            paths = glob(["**/*.go"]),
+        ),
+
+        metadata.expose_label("Co-authored-by"),
+        metadata.expose_label("Signed-off-by"),
+        metadata.add_header("Synced-From: google/starlark-go/syntax"),
+    ],
+)
