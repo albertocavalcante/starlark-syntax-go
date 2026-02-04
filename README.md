@@ -6,7 +6,26 @@
 [![License](https://img.shields.io/github/license/albertocavalcante/starlark-syntax-go)](LICENSE)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/albertocavalcante/starlark-syntax-go)](go.mod)
 
-Standalone Starlark syntax parsing for Go — automatically synced from upstream sources.
+Standalone Starlark **syntax parsing** for Go — automatically synced from upstream sources.
+
+**Syntax only. No interpreter.** This package provides lexing, parsing, and AST manipulation — not code execution. If you need to evaluate Starlark code, use the full [google/starlark-go](https://github.com/google/starlark-go) package instead.
+
+## Why This Package?
+
+The official Starlark parsers live inside larger projects with heavy dependencies:
+
+- **buildtools** includes formatters, linters, and rewriters you may not need
+- **starlark-go** bundles the full interpreter, REPL, and standard library
+
+This package extracts **just the syntax layer** for lightweight tooling. It stays current via automated [Copybara](https://github.com/google/copybara) syncs from upstream.
+
+## Use Cases
+
+- **Static analysis** — linters, security scanners, complexity checkers
+- **Code transformation** — formatters, refactoring tools, migration scripts
+- **Dependency extraction** — parse BUILD/MODULE.bazel to map the dependency graph
+- **Editor tooling** — syntax highlighting, go-to-definition, hover info
+- **Code generation** — programmatically build Starlark configs
 
 ## Installation
 
