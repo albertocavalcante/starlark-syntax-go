@@ -22,6 +22,8 @@ jobs:
       - name: Build
         run: go build ./...
 
+      # NOTE: 0% coverage is expected. We sync source files only, excluding
+      # upstream test files (*_test.go) to avoid pulling in extra dependencies.
       - name: Test
         run: go test -race -coverprofile=coverage.out ./...
 

@@ -1,5 +1,11 @@
 # starlark-syntax-go
 
+[![CI](https://github.com/albertocavalcante/starlark-syntax-go/actions/workflows/ci.yml/badge.svg)](https://github.com/albertocavalcante/starlark-syntax-go/actions/workflows/ci.yml)
+[![Sync](https://github.com/albertocavalcante/starlark-syntax-go/actions/workflows/sync.yml/badge.svg)](https://github.com/albertocavalcante/starlark-syntax-go/actions/workflows/sync.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/albertocavalcante/starlark-syntax-go.svg)](https://pkg.go.dev/github.com/albertocavalcante/starlark-syntax-go)
+[![License](https://img.shields.io/github/license/albertocavalcante/starlark-syntax-go)](LICENSE)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/albertocavalcante/starlark-syntax-go)](go.mod)
+
 Standalone Starlark syntax parsing for Go — automatically synced from upstream sources.
 
 ## Installation
