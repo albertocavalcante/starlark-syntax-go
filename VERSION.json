@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-02-04T12:33:17.347Z",
+  "generator": "github-actions",
+  "sources": {
+    "buildtools": {
+      "repository": "github.com/bazelbuild/buildtools",
+      "ref": "main"
+    },
+    "starlark-go": {
+      "repository": "github.com/google/starlark-go",
+      "ref": "master"
+    }
+  },
+  "packages": {
+    "bzl": "Bzl dialect parser (Apache 2.0)",
+    "bzl/labels": "Bazel label utilities (Apache 2.0)",
+    "starlark": "Official Google Starlark parser (BSD-3)"
+  }
+}
