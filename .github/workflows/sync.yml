@@ -92,14 +92,15 @@ jobs:
           fi
           echo "flags=$FLAGS" >> "$GITHUB_OUTPUT"
 
+      # Exit code 4 = NOOP (no changes to sync), which is not an error.
       - name: Sync Bzl Parser
         if: ${{ inputs.dry_run != true }}
         run: |
           java -jar /tmp/copybara_deploy.jar migrate \
             .copybara/copy.bara.sky \
             sync-bzl-parser \
-            --ignore-noop \
-            ${{ steps.flags.outputs.flags }}
+            ${{ steps.flags.outputs.flags }} \
+          && exit 0 || { rc=$?; [[ $rc -eq 4 ]] && echo "No changes to sync" && exit 0 || exit $rc; }
 
       - name: Sync Starlark Parser
         if: ${{ inputs.dry_run != true }}
@@ -107,8 +108,8 @@ jobs:
           java -jar /tmp/copybara_deploy.jar migrate \
             .copybara/copy.bara.sky \
             sync-starlark-parser \
-            --ignore-noop \
-            ${{ steps.flags.outputs.flags }}
+            ${{ steps.flags.outputs.flags }} \
+          && exit 0 || { rc=$?; [[ $rc -eq 4 ]] && echo "No changes to sync" && exit 0 || exit $rc; }
 
   generate-version:
     name: Generate VERSION.json
