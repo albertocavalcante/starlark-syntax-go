@@ -10,9 +10,9 @@ go get github.com/albertocavalcante/starlark-syntax-go
 
 ## Packages
 
-### `bzl` — Bzl Dialect (Starlark + Bazel builtins)
+### `bzl` — Parser for Bazel's Starlark files
 
-Parser optimized for BUILD, .bzl, and MODULE.bazel files. Preserves comments as CST-like attached nodes.
+Parser for BUILD, .bzl, MODULE.bazel, and WORKSPACE files. Preserves comments attached to AST nodes (CST-like).
 
 ```go
 import "github.com/albertocavalcante/starlark-syntax-go/bzl"
@@ -40,11 +40,11 @@ file, err := starlark.Parse("example.star", content, 0)
 
 | Aspect | `bzl` | `starlark` |
 |--------|-------|------------|
-| **Semantics** | Bzl dialect (Starlark + Bazel builtins) | Pure Starlark |
-| **Optimized for** | BUILD, .bzl, MODULE.bazel files | General .star files |
-| **Comment handling** | CST-style (attached to nodes) | Optional retention |
-| **Indentation** | Not needed (flat files) | Full support |
-| **Parser type** | Yacc-generated | Recursive-descent |
+| **Origin** | [bazelbuild/buildtools](https://github.com/bazelbuild/buildtools) | [google/starlark-go](https://github.com/google/starlark-go) |
+| **Target files** | BUILD, .bzl, MODULE.bazel, WORKSPACE | General .star files |
+| **Comment handling** | Attached to AST nodes (CST-like) | Optional (`RetainComments` mode) |
+| **Indentation** | Ignored (Bazel uses explicit delimiters) | Significant (Python-style blocks) |
+| **Parser type** | Yacc-generated (LALR) | Hand-written recursive-descent (LL1) |
 
 ## Versioning
 
