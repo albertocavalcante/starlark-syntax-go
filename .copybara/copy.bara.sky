@@ -72,28 +72,41 @@ core.workflow(
         core.rename("utils.go", "position.go", paths = glob(["bzl/*.go"])),
 
         # Update package name
-        core.replace(
-            before = "package build",
-            after = "package bzl",
-            paths = glob(["bzl/*.go"]),
-        ),
+        # IGNORE_NOOP: In ITERATIVE mode, a commit may only touch files that
+        # don't have `package build` (e.g., labels/ or testutils/).
+        core.transform([
+            core.replace(
+                before = "package build",
+                after = "package bzl",
+                paths = glob(["bzl/*.go"]),
+            ),
+        ], noop_behavior = "IGNORE_NOOP"),
 
         # Update import paths
-        core.replace(
-            before = '"github.com/bazelbuild/buildtools/build"',
-            after = '"github.com/albertocavalcante/starlark-syntax-go/bzl"',
-            paths = glob(["**/*.go"]),
-        ),
-        core.replace(
-            before = '"github.com/bazelbuild/buildtools/labels"',
-            after = '"github.com/albertocavalcante/starlark-syntax-go/bzl/labels"',
-            paths = glob(["**/*.go"]),
-        ),
-        core.replace(
-            before = '"github.com/bazelbuild/buildtools/testutils"',
-            after = '"github.com/albertocavalcante/starlark-syntax-go/internal/testutils"',
-            paths = glob(["**/*.go"]),
-        ),
+        # IGNORE_NOOP: In ITERATIVE mode, commits touching files within the
+        # `build` package don't import themselves, so these replaces are no-ops.
+        # Commits touching only labels/ or testutils/ may not have all imports.
+        core.transform([
+            core.replace(
+                before = '"github.com/bazelbuild/buildtools/build"',
+                after = '"github.com/albertocavalcante/starlark-syntax-go/bzl"',
+                paths = glob(["**/*.go"]),
+            ),
+        ], noop_behavior = "IGNORE_NOOP"),
+        core.transform([
+            core.replace(
+                before = '"github.com/bazelbuild/buildtools/labels"',
+                after = '"github.com/albertocavalcante/starlark-syntax-go/bzl/labels"',
+                paths = glob(["**/*.go"]),
+            ),
+        ], noop_behavior = "IGNORE_NOOP"),
+        core.transform([
+            core.replace(
+                before = '"github.com/bazelbuild/buildtools/testutils"',
+                after = '"github.com/albertocavalcante/starlark-syntax-go/internal/testutils"',
+                paths = glob(["**/*.go"]),
+            ),
+        ], noop_behavior = "IGNORE_NOOP"),
 
         metadata.expose_label("Co-authored-by"),
         metadata.expose_label("Signed-off-by"),
@@ -150,17 +163,23 @@ core.workflow(
 
         core.rename("syntax.go", "ast.go", paths = glob(["starlark/*.go"])),
 
-        core.replace(
-            before = "package syntax",
-            after = "package starlark",
-            paths = glob(["starlark/*.go"]),
-        ),
+        # IGNORE_NOOP: In ITERATIVE mode, a commit may only touch testdata/
+        # or files that don't contain these strings.
+        core.transform([
+            core.replace(
+                before = "package syntax",
+                after = "package starlark",
+                paths = glob(["starlark/*.go"]),
+            ),
+        ], noop_behavior = "IGNORE_NOOP"),
 
-        core.replace(
-            before = '"go.starlark.net/syntax"',
-            after = '"github.com/albertocavalcante/starlark-syntax-go/starlark"',
-            paths = glob(["**/*.go"]),
-        ),
+        core.transform([
+            core.replace(
+                before = '"go.starlark.net/syntax"',
+                after = '"github.com/albertocavalcante/starlark-syntax-go/starlark"',
+                paths = glob(["**/*.go"]),
+            ),
+        ], noop_behavior = "IGNORE_NOOP"),
 
         metadata.expose_label("Co-authored-by"),
         metadata.expose_label("Signed-off-by"),
