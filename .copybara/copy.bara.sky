@@ -11,7 +11,7 @@
 #   - https://github.com/google/copybara/blob/master/docs/reference.md
 # ==============================================================================
 
-defaultAuthor = authoring.pass_thru("Eukia[bot] <eukia[bot]@users.noreply.github.com>")
+_default_author = authoring.pass_thru("Eukia[bot] <eukia[bot]@users.noreply.github.com>")
 
 def safe_replace(before, after, paths = glob(["**/*.go"])):
     """Noop-tolerant replace for ITERATIVE mode.
@@ -66,7 +66,7 @@ core.workflow(
     ),
 
     mode = "ITERATIVE",
-    authoring = defaultAuthor,
+    authoring = _default_author,
 
     transformations = [
         # Move main sources
@@ -135,7 +135,7 @@ core.workflow(
     ),
 
     mode = "ITERATIVE",
-    authoring = defaultAuthor,
+    authoring = _default_author,
 
     transformations = [
         core.move("syntax", "starlark"),
