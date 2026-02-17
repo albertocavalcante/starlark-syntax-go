@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-02-08T00:48:48.490Z",
+  "generated_at": "2026-02-17T05:32:59.224Z",
   "generator": "github-actions",
   "sources": {
     "buildtools": {
       "repository": "github.com/bazelbuild/buildtools",
       "ref": "main",
-      "sha": "e24971d9d1a7b2ab9abcb5a1c37a36cd6f351680"
+      "sha": "859bfffeef82c78b21d8a506d09389d7a12e6d03"
     },
     "starlark-go": {
       "repository": "github.com/google/starlark-go",
       "ref": "master",
-      "sha": "3fee463870c9e2f24e391952f5cf5e95463357b4"
+      "sha": "b62fd896b91b2cebc0cbefa1954e983e4c4531e1"
     }
   },
   "packages": {
