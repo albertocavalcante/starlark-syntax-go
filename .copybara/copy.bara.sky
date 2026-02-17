@@ -13,6 +13,17 @@
 
 defaultAuthor = authoring.pass_thru("Eukia[bot] <eukia[bot]@users.noreply.github.com>")
 
+def safe_replace(before, after, paths = glob(["**/*.go"])):
+    """Noop-tolerant replace for ITERATIVE mode.
+
+    In ITERATIVE mode, Copybara processes each upstream commit individually.
+    A commit may only touch files that don't contain the target string (e.g.,
+    files within a package don't import themselves), making the replace a no-op.
+    """
+    return core.transform([
+        core.replace(before = before, after = after, paths = paths),
+    ], noop_behavior = "IGNORE_NOOP")
+
 # ==============================================================================
 # WORKFLOW: sync-bzl-parser
 # Source: bazelbuild/buildtools (Apache 2.0)
@@ -71,42 +82,11 @@ core.workflow(
         core.rename("syntax.go", "ast.go", paths = glob(["bzl/*.go"])),
         core.rename("utils.go", "position.go", paths = glob(["bzl/*.go"])),
 
-        # Update package name
-        # IGNORE_NOOP: In ITERATIVE mode, a commit may only touch files that
-        # don't have `package build` (e.g., labels/ or testutils/).
-        core.transform([
-            core.replace(
-                before = "package build",
-                after = "package bzl",
-                paths = glob(["bzl/*.go"]),
-            ),
-        ], noop_behavior = "IGNORE_NOOP"),
-
-        # Update import paths
-        # IGNORE_NOOP: In ITERATIVE mode, commits touching files within the
-        # `build` package don't import themselves, so these replaces are no-ops.
-        # Commits touching only labels/ or testutils/ may not have all imports.
-        core.transform([
-            core.replace(
-                before = '"github.com/bazelbuild/buildtools/build"',
-                after = '"github.com/albertocavalcante/starlark-syntax-go/bzl"',
-                paths = glob(["**/*.go"]),
-            ),
-        ], noop_behavior = "IGNORE_NOOP"),
-        core.transform([
-            core.replace(
-                before = '"github.com/bazelbuild/buildtools/labels"',
-                after = '"github.com/albertocavalcante/starlark-syntax-go/bzl/labels"',
-                paths = glob(["**/*.go"]),
-            ),
-        ], noop_behavior = "IGNORE_NOOP"),
-        core.transform([
-            core.replace(
-                before = '"github.com/bazelbuild/buildtools/testutils"',
-                after = '"github.com/albertocavalcante/starlark-syntax-go/internal/testutils"',
-                paths = glob(["**/*.go"]),
-            ),
-        ], noop_behavior = "IGNORE_NOOP"),
+        # Rewrite package and import paths (safe_replace tolerates no-ops)
+        safe_replace("package build", "package bzl", glob(["bzl/*.go"])),
+        safe_replace('"github.com/bazelbuild/buildtools/build"', '"github.com/albertocavalcante/starlark-syntax-go/bzl"'),
+        safe_replace('"github.com/bazelbuild/buildtools/labels"', '"github.com/albertocavalcante/starlark-syntax-go/bzl/labels"'),
+        safe_replace('"github.com/bazelbuild/buildtools/testutils"', '"github.com/albertocavalcante/starlark-syntax-go/internal/testutils"'),
 
         metadata.expose_label("Co-authored-by"),
         metadata.expose_label("Signed-off-by"),
@@ -163,23 +143,9 @@ core.workflow(
 
         core.rename("syntax.go", "ast.go", paths = glob(["starlark/*.go"])),
 
-        # IGNORE_NOOP: In ITERATIVE mode, a commit may only touch testdata/
-        # or files that don't contain these strings.
-        core.transform([
-            core.replace(
-                before = "package syntax",
-                after = "package starlark",
-                paths = glob(["starlark/*.go"]),
-            ),
-        ], noop_behavior = "IGNORE_NOOP"),
-
-        core.transform([
-            core.replace(
-                before = '"go.starlark.net/syntax"',
-                after = '"github.com/albertocavalcante/starlark-syntax-go/starlark"',
-                paths = glob(["**/*.go"]),
-            ),
-        ], noop_behavior = "IGNORE_NOOP"),
+        # Rewrite package and import paths (safe_replace tolerates no-ops)
+        safe_replace("package syntax", "package starlark", glob(["starlark/*.go"])),
+        safe_replace('"go.starlark.net/syntax"', '"github.com/albertocavalcante/starlark-syntax-go/starlark"'),
 
         metadata.expose_label("Co-authored-by"),
         metadata.expose_label("Signed-off-by"),
