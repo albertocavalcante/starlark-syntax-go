@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-22T02:38:13.748Z",
+  "generated_at": "2026-03-29T00:46:13.957Z",
   "generator": "github-actions",
   "sources": {
     "buildtools": {
@@ -10,7 +10,7 @@
     "starlark-go": {
       "repository": "github.com/google/starlark-go",
       "ref": "master",
-      "sha": "b62fd896b91b2cebc0cbefa1954e983e4c4531e1"
+      "sha": "fadfc96def35ea95e7f2bd9952256d4db1d80d91"
     }
   },
   "packages": {
